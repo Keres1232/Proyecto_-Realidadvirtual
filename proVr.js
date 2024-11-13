@@ -1,53 +1,106 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.module.js';
-import { XRControllerModelFactory } from 'https://cdn.jsdelivr.net/npm/three@0.153.0/examples/jsm/webxr/XRControllerModelFactory.js';
-import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.153.0/examples/jsm/webxr/VRButton.js';
+import * as THREE from 'three';
+import { VRButton } from 'three/addons/webxr/VRButton.js';
 
-// Escena, cámara y renderizador
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.xr.enabled = true;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.xr.enabled = true; // Habilitar VR
+
 document.body.appendChild(renderer.domElement);
 document.body.appendChild(VRButton.createButton(renderer));
 
-// Luz
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(1, 1, 1).normalize();
-scene.add(light);
+// Luz ambiental
+const ambientLight = new THREE.AmbientLight(0x404040, 2);
+scene.add(ambientLight);
 
-// Crear un cubo
-const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+// Luz puntual desde la cámara
+const spotlightMaterial = new THREE.MeshPhongMaterial({
+    color: 0xFFFF00,
+    transparent: true,
+    opacity: 0,
+});
+const spotlightGeometry = new THREE.CylinderGeometry(0.1, 0.5, 1, 32);
+const spotlight = new THREE.Mesh(spotlightGeometry, spotlightMaterial);
+spotlight.rotation.x = -Math.PI / 2; // Orienta la luz hacia adelante
+camera.add(spotlight); // Agrega la luz a la cámara
+scene.add(camera);
+
+// Cubemap
+const path = '/proyecto/penguins (44)/';
+const format = '.jpg';
+const urls = [
+    path + 'lf' + format, path + 'rt' + format,
+    path + 'up' + format, path + 'dn' + format,
+    path + 'ft' + format, path + 'bk' + format,
+];
+const reflectionCube = new THREE.CubeTextureLoader().load(urls);
+scene.background = reflectionCube;
+
+// Geometría del cubo
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = new THREE.MeshPhongMaterial({ color: 0x1E90FF });
 const cube = new THREE.Mesh(geometry, material);
 cube.position.set(0, 1, -2); // Posiciona el cubo frente a la cámara
 scene.add(cube);
 
-// Controlador VR
-const controller = renderer.xr.getController(0);
-scene.add(controller);
+// Esfera de objetivo
+const sphereGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+const sphereMaterial = new THREE.MeshPhongMaterial({ color: 0xFF0000 });
+const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+sphere.position.set(3, 1, -5); // Coloca la esfera en una posición visible
+scene.add(sphere);
 
-// Movimientos del cubo
-function moveCube() {
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
+// Piso
+const floorGeometry = new THREE.PlaneGeometry(20, 10);
+const floorMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+floor.position.y = -1;
+floor.rotation.x = Math.PI / 2;
+scene.add(floor);
+
+// Control de la luz
+let lightTimeout;
+window.addEventListener('mousedown', () => {
+    spotlightMaterial.opacity = 0.5; // Enciende la luz
+    clearTimeout(lightTimeout);
+    lightTimeout = setTimeout(() => {
+        spotlightMaterial.opacity = 0;
+    }, 400); // Apaga la luz después de 0.4 segundos
+});
+
+window.addEventListener('mouseup', () => {
+    spotlightMaterial.opacity = 0;
+    clearTimeout(lightTimeout);
+});
+
+// Colisiones
+const raycaster = new THREE.Raycaster();
+let score = 0;
+
+// Función para detectar colisión
+function checkCollision() {
+    // Establece el rayo desde la posición de la cámara en la dirección de adelante
+    const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); // Dirección de la cámara
+    raycaster.set(camera.position, direction);
+    const intersects = raycaster.intersectObject(sphere);
+
+    if (intersects.length > 0) { // Si hay una colisión, incrementa la puntuación y oculta la esfera
+        scene.remove(sphere);
+        score += 1;
+        console.log("Puntuación:", score);
+    }
 }
 
 // Animación
 function animate() {
-    renderer.setAnimationLoop(render);
-}
+    if (spotlightMaterial.opacity > 0) {
+        checkCollision();
+    }
 
-function render() {
-    moveCube();  // Aplica la rotación al cubo
     renderer.render(scene, camera);
 }
 
-animate();
-
-// Ajuste de tamaño en caso de redimensionar la ventana
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
+renderer.setAnimationLoop(animate);
