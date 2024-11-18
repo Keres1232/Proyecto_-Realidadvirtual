@@ -57,7 +57,7 @@ const spotlightMaterial = new THREE.MeshPhongMaterial({
 const spotlight = new THREE.Mesh(spotlightGeometry, spotlightMaterial);
 spotlight.position.set(2, 0, 0);
 spotlight.rotation.z = Math.PI/2; 
-cube.add(spotlight); 
+camera.add(spotlight); 
 
 //Objetivo 
 const geometry1 = new THREE.SphereGeometry(0.5, 16, 16 ); 
