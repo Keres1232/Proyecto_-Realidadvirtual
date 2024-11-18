@@ -21,7 +21,7 @@ scene.add(ambientLight);
 // Luz puntual desde la cámara
 const spotlightMaterial = new THREE.MeshPhongMaterial({
     color: 0xFFFF00,
-    transparent: true,
+    transparent: false,
     opacity: 0,
 });
 const spotlightGeometry = new THREE.CylinderGeometry(0.1, 0.5, 1, 32);
