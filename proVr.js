@@ -29,7 +29,7 @@ camera.add(spotlight); // Agrega la luz a la cámara
 scene.add(camera);
 
 // Cubemap
-const path = '/proyecto/penguins (44)/';
+const path = '/penguins (44)/';
 const format = '.jpg';
 const urls = [
     path + 'lf' + format, path + 'rt' + format,
