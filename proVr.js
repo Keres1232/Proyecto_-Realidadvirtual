@@ -18,16 +18,10 @@ document.body.appendChild(VRButton.createButton(renderer));
 const ambientLight = new THREE.AmbientLight(0x404040, 2);
 scene.add(ambientLight);
 
-// Luz puntual desde la cámara
-const spotlightMaterial = new THREE.MeshPhongMaterial({
-    color: 0xFFFF00,
-    transparent: false,
-    opacity: 0,
-});
-const spotlightGeometry = new THREE.CylinderGeometry(0.1, 0.5, 1, 32);
-const spotlight = new THREE.Mesh(spotlightGeometry, spotlightMaterial);
-spotlight.rotation.x = -Math.PI / 2; // Orienta la luz hacia adelante
-camera.add(spotlight); // Agrega la luz a la cámara
+const pointLight = new THREE.PointLight(0xFFA500, 1);
+pointLight.castShadow = true;
+scene.add(pointLight);
+pointLight.position.set(0, 60, 30);
 scene.add(camera);
 
 // Cubemap
@@ -48,20 +42,37 @@ const cube = new THREE.Mesh(geometry, material);
 cube.position.set(0, 1, -2); // Posiciona el cubo frente a la cámara
 scene.add(cube);
 
-// Esfera de objetivo
-const sphereGeometry = new THREE.SphereGeometry(0.5, 16, 16);
-const sphereMaterial = new THREE.MeshPhongMaterial({ color: 0xFF0000 });
-const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-sphere.position.set(3, 1, -5); // Coloca la esfera en una posición visible
-scene.add(sphere);
+//Geomeotria 
+//Camara
 
-// Piso
-const floorGeometry = new THREE.PlaneGeometry(20, 10);
-const floorMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
-const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-floor.position.y = -1;
-floor.rotation.x = Math.PI / 2;
-scene.add(floor);
+
+// Esfera de luz 
+const spotlightGeometry = new THREE.CylinderGeometry( 0.5, 1, 3, 32 );
+const spotlightMaterial = new THREE.MeshPhongMaterial({
+    color: 0xFFFF00,
+    transparent: true,
+    opacity: 0 
+});
+
+const spotlight = new THREE.Mesh(spotlightGeometry, spotlightMaterial);
+spotlight.position.set(2, 0, 0);
+spotlight.rotation.z = Math.PI/2; 
+cube.add(spotlight); 
+
+//Objetivo 
+const geometry1 = new THREE.SphereGeometry(0.5, 16, 16 ); 
+const material1 = new THREE.MeshPhongMaterial( { color: 0xFF0000 } ); 
+const sphere = new THREE.Mesh( geometry1, material1 ); 
+scene.add( sphere );
+sphere.position.set(3,0,0)
+
+//Piso
+const geometry2 = new THREE.PlaneGeometry( 20, 10 );
+const material2 = new THREE.MeshPhongMaterial( {color: 0x00ff00 , side: THREE.DoubleSide} );
+const piso = new THREE.Mesh( geometry2, material2 );
+scene.add( piso );
+piso.position.y =-1;
+piso.rotation.x = Math.PI/2;
 
 // Variable para almacenar el estado del Gamepad
 let gamepad;
@@ -101,33 +112,17 @@ function checkGamepad() {
     }
 }
 
-// Control de la luz
-// let lightTimeout;
-window.addEventListener('mousedown', () => {
-    spotlightMaterial.opacity = 0.5; // Enciende la luz
-    clearTimeout(lightTimeout);
-    lightTimeout = setTimeout(() => {
-        spotlightMaterial.opacity = 0;
-    }, 400); // Apaga la luz después de 0.4 segundos
-});
-
-window.addEventListener('mouseup', () => {
-    spotlightMaterial.opacity = 0;
-    clearTimeout(lightTimeout);
-});
-
 // Colisiones
 const raycaster = new THREE.Raycaster();
 let score = 0;
 
-// Función para detectar colisión
+// Función para detectar colision
 function checkCollision() {
-    // Establece el rayo desde la posición de la cámara en la dirección de adelante
-    const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); // Dirección de la cámara
-    raycaster.set(camera.position, direction);
+    // rayo desde la luz en la dirección de la esfera
+    raycaster.set(spotlight.position, new THREE.Vector3(1, 0, 0).normalize()); // Dirección de la luz
     const intersects = raycaster.intersectObject(sphere);
 
-    if (intersects.length > 0) { // Si hay una colisión, incrementa la puntuación y oculta la esfera
+    if (intersects.length > 0) {  // Si hay una colisión, incrementa la puntuación y oculta la esfera
         scene.remove(sphere);
         score += 1;
         console.log("Puntuación:", score);
