@@ -61,20 +61,43 @@ floor.position.y = -1;
 floor.rotation.x = Math.PI / 2;
 scene.add(floor);
 
-// Control de la luz
-let lightTimeout;
-window.addEventListener('mousedown', () => {
-    spotlightMaterial.opacity = 0.5; // Enciende la luz
-    clearTimeout(lightTimeout);
-    lightTimeout = setTimeout(() => {
-        spotlightMaterial.opacity = 0;
-    }, 400); // Apaga la luz después de 0.4 segundos
+// Variable para almacenar el estado del Gamepad
+let gamepad;
+
+// Detecta cuándo se conecta un Gamepad
+window.addEventListener("gamepadconnected", (event) => {
+    console.log("Gamepad conectado:", event.gamepad);
+    gamepad = event.gamepad; // Guarda la referencia al Gamepad conectado
 });
 
-window.addEventListener('mouseup', () => {
-    spotlightMaterial.opacity = 0;
-    clearTimeout(lightTimeout);
+// Detecta cuándo se desconecta un Gamepad
+window.addEventListener("gamepaddisconnected", (event) => {
+    console.log("Gamepad desconectado:", event.gamepad);
+    gamepad = null; // Limpia la referencia al Gamepad
 });
+
+// Control de la luz
+let lightTimeout;
+
+// Función para verificar los botones del Gamepad
+function checkGamepad() {
+    if (gamepad) {
+        // Obtén el estado actualizado del Gamepad
+        const gamepads = navigator.getGamepads();
+        const currentGamepad = gamepads[gamepad.index];
+
+        if (currentGamepad) {
+            // Verifica si el botón "A" (índice 0) está presionado
+            if (currentGamepad.buttons[0].pressed) {
+                spotlightMaterial.opacity = 0.5; // Enciende la luz
+                clearTimeout(lightTimeout);
+                lightTimeout = setTimeout(() => {
+                    spotlightMaterial.opacity = 0;
+                }, 400); // Apaga la luz después de 0.4 segundos
+            }
+        }
+    }
+}
 
 // Colisiones
 const raycaster = new THREE.Raycaster();
@@ -101,6 +124,9 @@ function animate() {
     }
 
     renderer.render(scene, camera);
+
+    // Verifica el estado del Gamepad en cada frame
+    checkGamepad();
 }
 
 renderer.setAnimationLoop(animate);
