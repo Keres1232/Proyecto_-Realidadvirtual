@@ -129,6 +129,10 @@ function checkCollision() {
     }
 }
 
+class personaje {
+    
+}
+
 // Animación
 function animate() {
     if (spotlightMaterial.opacity > 0) {
