@@ -24,7 +24,7 @@ const ambientLight = new THREE.AmbientLight(0x00008B, 0.6);
 scene.add(ambientLight);
 
 // Luz puntual
-const pointLight = new THREE.PointLight(0xFFD700,0.5 );
+const pointLight = new THREE.PointLight(0xFFD700,3 );
 pointLight.position.set(0, 50, 50);
 pointLight.castShadow = true;
 scene.add(pointLight);
@@ -39,8 +39,6 @@ const urls = [
 ];
 const reflectionCube = new THREE.CubeTextureLoader().load(urls);
 scene.background = reflectionCube;
-
-<<<<<<< HEAD
 
 //Alboles 
 let loaderArbol = new FBXLoader();
@@ -59,8 +57,7 @@ loaderArbol.load('/ARBOL.fbx', function(Arbol){
 // const cube = new THREE.Mesh(geometry, material);
 // cube.position.set(0, 1, -2); // Posiciona el cubo frente a la cámara
 // scene.add(cube);
-=======
->>>>>>> 06468f8d43f90bdc83849b9bd1f2c3c56d7ae493
+
 
 //Camara
 
