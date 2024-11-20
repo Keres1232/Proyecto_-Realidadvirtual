@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
@@ -197,20 +199,53 @@ class Personaje {
 }
 
 
+
+
 class Enemy {
     constructor(scene, position = new THREE.Vector3(), speed = 0.05, maxDistance = 2) {
-        // Crear geometría y material para el enemigo
-        const geometry = new THREE.SphereGeometry(0.5, 16, 16);
-        this.material = new THREE.MeshPhongMaterial({ color: 0xFF0000 }); // Color inicial: rojo
-        this.mesh = new THREE.Mesh(geometry, this.material);
-
-        // Posicionar el enemigo
-        this.mesh.position.copy(position);
+        this.scene = scene;
+        this.position = position;
         this.speed = speed;
-        this.maxDistance = maxDistance; // Distancia máxima permitida a la cámara
+        this.maxDistance = maxDistance;
 
-        // Agregar el enemigo a la escena
-        scene.add(this.mesh);
+        // Cargar el modelo FBX
+        const loader = new FBXLoader();
+        loader.load(
+            './monstruo1.fbx',
+            (fbx) => {
+                this.mesh = fbx;
+                this.mesh.scale.set(0.001, 0.001, 0.001); // Escalar modelo si es necesario
+                this.mesh.position.copy(this.position);
+                this.scene.add(this.mesh);
+            },
+            (xhr) => {
+                console.log((xhr.loaded / xhr.total) * 100 + '% loaded');
+            },
+            (error) => {
+                console.error('Error loading FBX model:', error);
+            }
+        );
+    }
+
+    /**
+     * Genera una posición aleatoria dentro de un rango definido.
+     * @returns {THREE.Vector3} - La posición aleatoria generada.
+     */
+    generateRandomPosition() {
+        const x = Math.random() * 10 - 5; // Rango aleatorio entre -5 y 5
+        const y = -1; // Altura fija
+        const z = Math.random() * 10 - 5; // Rango aleatorio entre -5 y 5
+        return new THREE.Vector3(x, y, z);
+    }
+
+    /**
+     * Reinicia el enemigo a una nueva posición aleatoria.
+     */
+    resetEnemy() {
+        if (this.mesh) {
+            this.position = this.generateRandomPosition();
+            this.mesh.position.copy(this.position);
+        }
     }
 
     /**
@@ -219,6 +254,8 @@ class Enemy {
      * @returns {boolean} - `true` si el enemigo está siendo observado, de lo contrario, `false`.
      */
     isBeingWatched(camera) {
+        if (!this.mesh) return false;
+
         const direction = new THREE.Vector3();
         camera.getWorldDirection(direction); // Dirección hacia donde mira la cámara
         const toEnemy = new THREE.Vector3();
@@ -226,23 +263,27 @@ class Enemy {
 
         // Calcular el ángulo entre la dirección de la cámara y el enemigo
         const dot = direction.dot(toEnemy);
-        const beingWatched = dot > 0.8; 
-        // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera observado
-
-        // Cambiar el color del enemigo según esté siendo observado o no
-        this.material.color.set(beingWatched ? 0x00FF00 : 0xFF0000); // Verde si está siendo observado, rojo si no
-
-        return beingWatched;
+        return dot > 0.8; // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera observado
     }
 
     /**
      * Mueve el enemigo hacia la cámara si no está siendo observado y no excede la distancia máxima.
+     * Reinicia su posición si alcanza al jugador.
      * @param {THREE.Camera} camera - La cámara de la escena.
      */
     moveTowardCamera(camera) {
+        if (!this.mesh) return;
+
         const distanceToCamera = this.mesh.position.distanceTo(camera.position);
 
-        // Si está dentro de la distancia máxima o siendo observado, no se mueve
+        // Si el enemigo está a una distancia de 0, reiniciarlo
+        if (distanceToCamera <= 0.01) {
+            console.log('Enemy reached the player! Resetting...');
+            this.resetEnemy();
+            return;
+        }
+
+        // Si está siendo observado o dentro de la distancia máxima, no se mueve
         if (distanceToCamera <= this.maxDistance || this.isBeingWatched(camera)) {
             return;
         }
@@ -253,6 +294,10 @@ class Enemy {
         this.mesh.position.addScaledVector(direction, this.speed); // Mover en esa dirección
     }
 }
+
+// Crear un enemigo con posición inicial aleatoria
+const initialPosition = new THREE.Vector3(Math.random() * 10 - 5, 1, Math.random() * 10 - 5);
+
 
 // Objetivo para colisiones
 const targets = [];
