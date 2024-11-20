@@ -267,7 +267,7 @@ class Enemy {
     }
 }
 
-const enemy = new Enemy(scene, './monstruo1.fbx', new THREE.Vector3(0, -1, -5), 0.002, 0);
+const enemy = new Enemy(scene, './monstruo1.fbx', new THREE.Vector3(0, -1, -5), 0.02, 0);
 
 
 
