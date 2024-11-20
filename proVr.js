@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
@@ -196,7 +198,8 @@ class Personaje {
     }
 }
 
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
+
 
 class Enemy {
     constructor(scene, position = new THREE.Vector3(), speed = 0.05, maxDistance = 2) {
@@ -205,38 +208,48 @@ class Enemy {
         this.speed = speed;
         this.maxDistance = maxDistance;
 
-        this.loader = new GLTFLoader();
-        this.mixer = null; // Controlador de animaciones
-        this.animations = {}; // Almacenará las animaciones por nombre
-
-        // Cargar el modelo
-        this.loader.load(
-            '/monstruo1.glb',
-            (gltf) => {
-                this.mesh = gltf.scene;
+        // Cargar el modelo FBX
+        const loader = new FBXLoader();
+        loader.load(
+            './monstruo1.fbx',
+            (fbx) => {
+                this.mesh = fbx;
+                this.mesh.scale.set(0.01, 0.01, 0.01); // Escalar modelo si es necesario
                 this.mesh.position.copy(this.position);
-                scene.add(this.mesh);
-
-                // Configurar el mixer y las animaciones
-                this.mixer = new THREE.AnimationMixer(this.mesh);
-                gltf.animations.forEach((clip) => {
-                    this.animations[clip.name] = this.mixer.clipAction(clip);
-                });
-
-                // Iniciar una animación inicial
-                if (this.animations['Key 1']) {
-                    this.animations['Basis'].play();
-                }
+                this.scene.add(this.mesh);
             },
-            undefined,
+            (xhr) => {
+                console.log((xhr.loaded / xhr.total) * 100 + '% loaded');
+            },
             (error) => {
-                console.error('Error loading model:', error);
+                console.error('Error loading FBX model:', error);
             }
         );
     }
 
     /**
-     * Verifica si el enemigo está siendo "observado" por la cámara y actualiza su animación.
+     * Genera una posición aleatoria dentro de un rango definido.
+     * @returns {THREE.Vector3} - La posición aleatoria generada.
+     */
+    generateRandomPosition() {
+        const x = Math.random() * 10 - 5; // Rango aleatorio entre -5 y 5
+        const y = 1; // Altura fija
+        const z = Math.random() * 10 - 5; // Rango aleatorio entre -5 y 5
+        return new THREE.Vector3(x, y, z);
+    }
+
+    /**
+     * Reinicia el enemigo a una nueva posición aleatoria.
+     */
+    resetEnemy() {
+        if (this.mesh) {
+            this.position = this.generateRandomPosition();
+            this.mesh.position.copy(this.position);
+        }
+    }
+
+    /**
+     * Verifica si el enemigo está siendo "observado" por la cámara y actualiza su color.
      * @param {THREE.Camera} camera - La cámara de la escena.
      * @returns {boolean} - `true` si el enemigo está siendo observado, de lo contrario, `false`.
      */
@@ -250,52 +263,40 @@ class Enemy {
 
         // Calcular el ángulo entre la dirección de la cámara y el enemigo
         const dot = direction.dot(toEnemy);
-        const beingWatched = dot > 0.8; 
-
-        // Cambiar la animación según esté siendo observado o no
-        if (beingWatched) {
-            this.playAnimation('Idle'); // Cambiar a animación estática
-        } else {
-            this.playAnimation('Move'); // Cambiar a animación de movimiento
-        }
-
-        return beingWatched;
+        return dot > 0.8; // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera observado
     }
 
     /**
      * Mueve el enemigo hacia la cámara si no está siendo observado y no excede la distancia máxima.
+     * Reinicia su posición si alcanza al jugador.
      * @param {THREE.Camera} camera - La cámara de la escena.
-     * @param {number} delta - Delta time para animación y movimiento.
      */
-    moveTowardCamera(camera, delta) {
-        if (!this.mesh || !this.mixer) return;
+    moveTowardCamera(camera) {
+        if (!this.mesh) return;
 
         const distanceToCamera = this.mesh.position.distanceTo(camera.position);
 
-        // Si está dentro de la distancia máxima o siendo observado, no se mueve
+        // Si el enemigo está a una distancia de 0, reiniciarlo
+        if (distanceToCamera <= 0.01) {
+            console.log('Enemy reached the player! Resetting...');
+            this.resetEnemy();
+            return;
+        }
+
+        // Si está siendo observado o dentro de la distancia máxima, no se mueve
         if (distanceToCamera <= this.maxDistance || this.isBeingWatched(camera)) {
             return;
         }
 
         // Mover al enemigo hacia la cámara
         const direction = new THREE.Vector3();
-        direction.subVectors(camera.position, this.mesh.position).normalize();
-        this.mesh.position.addScaledVector(direction, this.speed * delta);
-
-        // Actualizar animaciones
-        this.mixer.update(delta);
-    }
-
-    /**
-     * Cambia la animación del enemigo.
-     * @param {string} name - Nombre de la animación a reproducir.
-     */
-    playAnimation(name) {
-        if (!this.animations[name]) return;
-        Object.values(this.animations).forEach((action) => action.stop());
-        this.animations[name].play();
+        direction.subVectors(camera.position, this.mesh.position).normalize(); // Dirección hacia la cámara
+        this.mesh.position.addScaledVector(direction, this.speed); // Mover en esa dirección
     }
 }
+
+// Crear un enemigo con posición inicial aleatoria
+const initialPosition = new THREE.Vector3(Math.random() * 10 - 5, 1, Math.random() * 10 - 5);
 
 
 // Objetivo para colisiones
