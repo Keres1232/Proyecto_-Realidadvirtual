@@ -184,7 +184,7 @@ class Enemy {
     }
 }
 
-const enemy = new Enemy(scene, new THREE.Vector3(3, 1, -5), 0.002, 0); // Posición inicial y velocidad
+const enemy = new Enemy(scene, new THREE.Vector3(0, 1, -5), 0.002, 0); // Posición inicial y velocidad
 
 
 
