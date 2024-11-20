@@ -107,21 +107,21 @@ function checkGamepad() {
 }
 
 // Colisiones
-const raycaster = new THREE.Raycaster();
-let score = 0;
+// const raycaster = new THREE.Raycaster();
+// let score = 0;
 
-// Función para detectar colision
-function checkCollision() {
-    // rayo desde la luz en la dirección de la esfera
-    raycaster.set(spotlight.position, new THREE.Vector3(1, 0, 0).normalize()); // Dirección de la luz
-    const intersects = raycaster.intersectObject(sphere);
+// // Función para detectar colision
+// // function checkCollision() {
+// //     // rayo desde la luz en la dirección de la esfera
+// //     raycaster.set(spotlight.position, new THREE.Vector3(1, 0, 0).normalize()); // Dirección de la luz
+// //     const intersects = raycaster.intersectObject(sphere);
 
-    if (intersects.length > 0) {  // Si hay una colisión, incrementa la puntuación y oculta la esfera
-        scene.remove(sphere);
-        score += 1;
-        console.log("Puntuación:", score);
-    }
-}
+// //     if (intersects.length > 0) {  // Si hay una colisión, incrementa la puntuación y oculta la esfera
+// //         scene.remove(sphere);
+// //         score += 1;
+// //         console.log("Puntuación:", score);
+// //     }
+// // }
 
 class Personaje {
 
@@ -274,7 +274,7 @@ for (let i = 0; i < 5; i++) {
 // Animación
 function animate() {
     if (spotlightMaterial.opacity > 0) {
-        checkCollision();
+        personaje.checkCollision();
     }
 
     renderer.render(scene, camera);
