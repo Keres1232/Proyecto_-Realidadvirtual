@@ -105,6 +105,47 @@ class Enemy {
     }
 }
 
+//Colisiones
+//const raycaster = new THREE.Raycaster();
+let score = 0;
+
+//Función para detectar colision
+function checkCollision() {
+    // rayo desde la luz en la dirección de la esfera
+    raycaster.set(spotlight.position, new THREE.Vector3(1, 0, 0).normalize()); // Dirección de la luz
+    const intersects = raycaster.intersectObject(sphere);
+
+    if (intersects.length > 0) {  // Si hay una colisión, incrementa la puntuación y oculta la esfera
+        scene.remove(sphere);
+        score += 1;
+        console.log("Puntuación:", score);
+    }
+}
+
+
+// Control de la luz
+let lightTimeout;
+
+// Función para verificar los botones del Gamepad
+function checkGamepad() {
+    if (gamepad) {
+        // Obtén el estado actualizado del Gamepad
+        const gamepads = navigator.getGamepads();
+        const currentGamepad = gamepads[gamepad.index];
+
+        if (currentGamepad) {
+            // Verifica si el botón "A" (índice 0) está presionado
+            if (currentGamepad.buttons[0].pressed) {
+                spotlightMaterial.opacity = 0.5; // Enciende la luz
+                clearTimeout(lightTimeout);
+                lightTimeout = setTimeout(() => {
+                    spotlightMaterial.opacity = 0;
+                }, 400); // Apaga la luz después de 0.4 segundos
+            }
+        }
+    }
+}
+
 // Configuración de la escena
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
