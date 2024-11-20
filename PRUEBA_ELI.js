@@ -240,5 +240,5 @@ function animate() {
     enemy.moveTowardCamera(camera);
     checkGamepad();
 }
-
+//
 renderer.setAnimationLoop(animate);
