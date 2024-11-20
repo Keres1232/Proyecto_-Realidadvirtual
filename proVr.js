@@ -35,14 +35,7 @@ const urls = [
 const reflectionCube = new THREE.CubeTextureLoader().load(urls);
 scene.background = reflectionCube;
 
-// // Geometría del cubo
-// const geometry = new THREE.BoxGeometry(1, 1, 1);
-// const material = new THREE.MeshPhongMaterial({ color: 0x1E90FF });
-// const cube = new THREE.Mesh(geometry, material);
-// cube.position.set(0, 1, -2); // Posiciona el cubo frente a la cámara
-// scene.add(cube);
 
-//Geomeotria 
 //Camara
 
 // Esfera de luz 
