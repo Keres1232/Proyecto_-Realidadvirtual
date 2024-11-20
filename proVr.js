@@ -147,18 +147,18 @@ class Personaje {
         this.linternaEncendida = false; // Estado inicial de la linterna
 
         // Material semitransparente para el haz de luz
-        // this.linternaMaterial = new THREE.MeshPhongMaterial({
-        //     color: 0xFFFF00,
-        //     transparent: true,
-        //     opacity: 0,
-        // });
+        this.linternaMaterial = new THREE.MeshPhongMaterial({
+            color: 0xFFFF00,
+            transparent: true,
+            opacity: 0,
+        });
 
-        // // Haz de luz simulado
-        // const spotlightGeometry = new THREE.CylinderGeometry(0.5, 1, 3, 32);
-        // this.hazLuz = new THREE.Mesh(spotlightGeometry, this.linternaMaterial);
-        // this.hazLuz.position.set(0, -1.5, -2); // Frente al personaje
-        // this.hazLuz.rotation.x = Math.PI / 2;
-        // this.character.add(this.hazLuz);
+        // Haz de luz simulado
+        const spotlightGeometry = new THREE.CylinderGeometry(0.5, 1, 3, 32);
+        this.hazLuz = new THREE.Mesh(spotlightGeometry, this.linternaMaterial);
+        this.hazLuz.position.set(0, -1.5, -2); // Frente al personaje
+        this.hazLuz.rotation.x = Math.PI / 2;
+        this.character.add(this.hazLuz);
 
         // Controlador de Gamepad
         this.gamepad = null;
@@ -167,24 +167,24 @@ class Personaje {
         this.lastButtonState = false;
     }
 
-    // toggleLinterna() {
-    //     this.linternaEncendida = !this.linternaEncendida;
-    //     this.linterna.visible = this.linternaEncendida;
-    //     this.linternaMaterial.opacity = this.linternaEncendida ? 0.5 : 0; // Simula el haz de luz
-    // }
+    toggleLinterna() {
+        this.linternaEncendida = !this.linternaEncendida;
+        this.linterna.visible = this.linternaEncendida;
+        this.linternaMaterial.opacity = this.linternaEncendida ? 0.5 : 0; // Simula el haz de luz
+    }
 
     checkGamepad() {
-        let lightTimeout;
         const gamepads = navigator.getGamepads();
-        
         if (gamepads[0]) {
-            this.linternaMaterial.opacity = this.linternaEncendida ? 0.5 : 0; // Enciende la luz
-            clearTimeout(lightTimeout);
-            lightTimeout = setTimeout(() => {
-                this.linternaMaterial.opacity = 0;
-            }, 400); // Apaga la luz después de 0.4 segundos
+            this.gamepad = gamepads[0];
+            if (this.gamepad.buttons[0].pressed && !this.lastButtonState) {
+                this.toggleLinterna();
+                this.lastButtonState = true;
+            }
+            if (!this.gamepad.buttons[0].pressed && this.lastButtonState) {
+                this.lastButtonState = false;
+            }
         }
-        
     }
 
     checkCollision(raycaster, targets) {
@@ -203,59 +203,44 @@ class Personaje {
 
 
 class Enemy {
-    constructor(scene, position = new THREE.Vector3(), speed = 0.05, maxDistance = 2) {
+    constructor(scene, position = new THREE.Vector3(), speed = 0.05, maxDistance = 2, fbxPath = '') {
         this.scene = scene;
         this.position = position;
         this.speed = speed;
         this.maxDistance = maxDistance;
 
+        this.mesh = null; // Se inicializará con el modelo FBX
+        this.material = null; // Para cambiar colores si es necesario
+        this.isModelLoaded = false; // Bandera para saber si el modelo se cargó
+
         // Cargar el modelo FBX
         const loader = new FBXLoader();
         loader.load(
-            '/monstruo1.fbx',
+            fbxPath,
             (fbx) => {
                 this.mesh = fbx;
-                this.mesh.scale.set(0.005, 0.005, 0.005); // Escalar modelo si es necesario
                 this.mesh.position.copy(this.position);
+
+                // Escalar el modelo si es necesario
+                this.mesh.scale.set(0.01, 0.01, 0.01);
+
+                // Agregar el modelo a la escena
                 this.scene.add(this.mesh);
+
+                // Activar bandera de modelo cargado
+                this.isModelLoaded = true;
             },
             (xhr) => {
-                console.log((xhr.loaded / xhr.total) * 100 + '% loaded');
+                console.log(`FBXLoader: ${(xhr.loaded / xhr.total) * 100}% cargado.`);
             },
             (error) => {
-                console.error('Error loading FBX model:', error);
+                console.error('Error al cargar el modelo FBX:', error);
             }
         );
     }
 
-    /**
-     * Genera una posición aleatoria dentro de un rango definido.
-     * @returns {THREE.Vector3} - La posición aleatoria generada.
-     */
-    generateRandomPosition() {
-        const x = Math.random() * 10 - 5; // Rango aleatorio entre -5 y 5
-        const y = -10 // Altura fija
-        const z = Math.random() * 10 - 5; // Rango aleatorio entre -5 y 5
-        return new THREE.Vector3(x, y, z);
-    }
-
-    /**
-     * Reinicia el enemigo a una nueva posición aleatoria.
-     */
-    resetEnemy() {
-        if (this.mesh) {
-            this.position = this.generateRandomPosition();
-            this.mesh.position.copy(this.position);
-        }
-    }
-
-    /**
-     * Verifica si el enemigo está siendo "observado" por la cámara y actualiza su color.
-     * @param {THREE.Camera} camera - La cámara de la escena.
-     * @returns {boolean} - `true` si el enemigo está siendo observado, de lo contrario, `false`.
-     */
     isBeingWatched(camera) {
-        if (!this.mesh) return false;
+        if (!this.isModelLoaded) return false;
 
         const direction = new THREE.Vector3();
         camera.getWorldDirection(direction); // Dirección hacia donde mira la cámara
@@ -264,27 +249,21 @@ class Enemy {
 
         // Calcular el ángulo entre la dirección de la cámara y el enemigo
         const dot = direction.dot(toEnemy);
-        return dot > 0.8; // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera observado
+        const beingWatched = dot > 0.8;
+        // Cambiar color del modelo (si tiene materiales)
+        if (this.mesh.material) {
+            this.mesh.material.color.set(beingWatched ? 0x00FF00 : 0xFF0000);
+        }
+
+        return beingWatched;
     }
 
-    /**
-     * Mueve el enemigo hacia la cámara si no está siendo observado y no excede la distancia máxima.
-     * Reinicia su posición si alcanza al jugador.
-     * @param {THREE.Camera} camera - La cámara de la escena.
-     */
     moveTowardCamera(camera) {
-        if (!this.mesh) return;
+        if (!this.isModelLoaded) return;
 
         const distanceToCamera = this.mesh.position.distanceTo(camera.position);
 
-        // Si el enemigo está a una distancia de 0, reiniciarlo
-        if (distanceToCamera <= 0.001) {
-            console.log('Enemy reached the player! Resetting...');
-            this.resetEnemy();
-            return;
-        }
-
-        // Si está siendo observado o dentro de la distancia máxima, no se mueve
+        // Si está dentro de la distancia máxima o siendo observado, no se mueve
         if (distanceToCamera <= this.maxDistance || this.isBeingWatched(camera)) {
             return;
         }
@@ -296,6 +275,8 @@ class Enemy {
     }
 }
 
+// Crear un enemigo con un modelo FBX
+const enemy = new Enemy(scene, new THREE.Vector3(0, 1, -5), 0.002, 2, '/monstruo1.fbx');
 
 
 
@@ -310,9 +291,7 @@ for (let i = 0; i < 3; i++) {
     targets.push(target);
 }
 
-// Crear un enemigo con posición inicial aleatoria
-const initialPosition = new THREE.Vector3(Math.random() * 10 - 5, 1, Math.random() * 10 - 5);
-const enemy = new Enemy(scene, initialPosition, 0.02, 2);
+
 // Crear el personaje
 const personaje = new Personaje(scene, camera);
 
