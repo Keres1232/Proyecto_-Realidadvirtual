@@ -20,9 +20,14 @@ document.body.appendChild(VRButton.createButton(renderer));
 const controls = new OrbitControls(camera, renderer.domElement);
 
 // Luz ambiental
-const ambientLight = new THREE.AmbientLight(0x404040, 2);
+const ambientLight = new THREE.AmbientLight(0x00008B, 0.6);
 scene.add(ambientLight);
 
+// Luz puntual
+const pointLight = new THREE.PointLight(0xFFD700,0.5 );
+pointLight.position.set(0, 50, 50);
+pointLight.castShadow = true;
+scene.add(pointLight);
 
 // Cubemap
 const path = '/penguins (44)/';
@@ -34,6 +39,18 @@ const urls = [
 ];
 const reflectionCube = new THREE.CubeTextureLoader().load(urls);
 scene.background = reflectionCube;
+
+
+//Alboles 
+let loaderArbol = new FBXLoader();
+loaderArbol.load('/ARBOL.fbx', function(Arbol){
+    scene.add(Arbol);
+    Arbol.scale.set(0.01,0.01,0.02);
+    Arbol.position.set(0,0,0);
+    Arbol.receiveShadow = true;
+});
+
+
 
 // // Geometría del cubo
 // const geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -65,13 +82,7 @@ const sphere = new THREE.Mesh( geometry1, material1 );
 scene.add( sphere );
 sphere.position.set(3,0,0)
 
-//Piso
-const geometry2 = new THREE.PlaneGeometry( 20, 10 );
-const material2 = new THREE.MeshPhongMaterial( {color: 0x00ff00 , side: THREE.DoubleSide} );
-const piso = new THREE.Mesh( geometry2, material2 );
-scene.add( piso );
-piso.position.y =-1;
-piso.rotation.x = Math.PI/2;
+
 
 // Variable para almacenar el estado del Gamepad
 let gamepad;
