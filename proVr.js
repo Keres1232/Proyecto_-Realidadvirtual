@@ -259,7 +259,7 @@ const targetGeometry = new THREE.SphereGeometry(0.5, 16, 16);
 const targetMaterial = new THREE.MeshPhongMaterial({ color: 0x0000FF });
 for (let i = 0; i < 3; i++) {
     const target = new THREE.Mesh(targetGeometry, targetMaterial);
-    target.position.set(i * 2 - 2, 0, -5);
+    target.position.set(i * 2 - 2, 0, -3);
     scene.add(target);
     targets.push(target);
 }
