@@ -106,9 +106,9 @@ function checkGamepad() {
     }
 }
 
-// Colisiones
-// const raycaster = new THREE.Raycaster();
-// let score = 0;
+//Colisiones
+const raycaster = new THREE.Raycaster();
+let score = 0;
 
 // // Función para detectar colision
 // // function checkCollision() {
@@ -124,7 +124,6 @@ function checkGamepad() {
 // // }
 
 class Personaje {
-
     constructor(scene, camera) {
         this.scene = scene;
 
@@ -135,6 +134,12 @@ class Personaje {
         // Posicionar la cámara dentro del personaje
         this.character.add(camera);
         camera.position.set(0, 1.6, 0); // Ajustar altura
+
+        // Linterna (luz puntual)
+        this.linterna = new THREE.PointLight(0xFFFFFF, 1, 10); // Luz blanca
+        this.linterna.position.set(0, 1.6, 0); // Nivel de la cámara
+        this.character.add(this.linterna);
+        this.linternaEncendida = false; // Estado inicial de la linterna
 
         // Material semitransparente para el haz de luz
         this.linternaMaterial = new THREE.MeshPhongMaterial({
@@ -150,40 +155,45 @@ class Personaje {
         this.hazLuz.rotation.x = Math.PI / 2;
         this.character.add(this.hazLuz);
 
-        this.raycaster = new THREE.Raycaster(); // Raycaster para detectar colisiones
-        this.targets = []; // Lista de objetivos
+        // Controlador de Gamepad
+        this.gamepad = null;
 
-        // Variables de control para activar la linterna
-        this.linternaEncendida = false;
-        this.lightTimeout = null;
+        // Estado del botón
+        this.lastButtonState = false;
     }
+
     toggleLinterna() {
-        // Alternar la linterna encendida y apagada
         this.linternaEncendida = !this.linternaEncendida;
-        this.linternaMaterial.opacity = this.linternaEncendida ? 0.5 : 0;
-        if (this.linternaEncendida) {
-            // Temporizador para apagar la linterna automáticamente
-            clearTimeout(this.lightTimeout);
-            this.lightTimeout = setTimeout(() => {
-                this.linternaEncendida = false;
-                this.linternaMaterial.opacity = 0;
-            }, 400); // Apaga después de 0.4 segundos
-        }
+        this.linterna.visible = this.linternaEncendida;
+        this.linternaMaterial.opacity = this.linternaEncendida ? 0.5 : 0; // Simula el haz de luz
     }
-    checkCollision() {
-        // Configurar raycaster
-        this.raycaster.set(this.linterna.position, new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion));
 
-        // Detectar intersecciones con los objetivos
-        const intersects = this.raycaster.intersectObjects(this.targets.map((target) => target.mesh));
-        if (intersects.length > 0) {
-            const hitTarget = intersects[0].object;
-            this.scene.remove(hitTarget); // Eliminar objetivo
-            this.targets = this.targets.filter((target) => target.mesh !== hitTarget);
-            console.log("Objetivo eliminado");
+    checkGamepad() {
+        const gamepads = navigator.getGamepads();
+        if (gamepads[0]) {
+            this.gamepad = gamepads[0];
+            if (this.gamepad.buttons[0].pressed && !this.lastButtonState) {
+                this.toggleLinterna();
+                this.lastButtonState = true;
+            }
+            if (!this.gamepad.buttons[0].pressed && this.lastButtonState) {
+                this.lastButtonState = false;
+            }
         }
     }
-    
+
+    checkCollision(raycaster, targets) {
+        if (this.linternaEncendida) {
+            raycaster.set(this.character.position, new THREE.Vector3(0, 0, -1).applyQuaternion(this.character.children[0].quaternion));
+
+            const intersects = raycaster.intersectObjects(targets);
+            if (intersects.length > 0) {
+                const hit = intersects[0].object;
+                this.scene.remove(hit); // Elimina el objeto
+                console.log("Objeto eliminado:", hit);
+            }
+        }
+    }
 }
 
 class Enemy {
@@ -243,15 +253,15 @@ class Enemy {
     }
 }
 
-// Clase Objetivo
-class Objetivo {
-    constructor(scene, position = new THREE.Vector3(0, 0, 0)) {
-        const geometry = new THREE.SphereGeometry(0.5, 16, 16);
-        const material = new THREE.MeshPhongMaterial({ color: 0xFF0000 });
-        this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.position.copy(position);
-        scene.add(this.mesh);
-    }
+// Objetivo para colisiones
+const targets = [];
+const targetGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+const targetMaterial = new THREE.MeshPhongMaterial({ color: 0x0000FF });
+for (let i = 0; i < 3; i++) {
+    const target = new THREE.Mesh(targetGeometry, targetMaterial);
+    target.position.set(i * 2 - 2, 0, -5);
+    scene.add(target);
+    targets.push(target);
 }
 
 const enemy = new Enemy(scene, new THREE.Vector3(0, 1, -5), 0.002, 0); // Posición inicial y velocidad
@@ -259,23 +269,12 @@ const enemy = new Enemy(scene, new THREE.Vector3(0, 1, -5), 0.002, 0); // Posici
 // Crear el personaje
 const personaje = new Personaje(scene, camera);
 
-// Crear objetivos
-for (let i = 0; i < 5; i++) {
-    const position = new THREE.Vector3(
-        Math.random() * 10 - 5,
-        0.5,
-        Math.random() * -10
-    );
-    const target = new Objetivo(scene, position);
-    personaje.targets.push(target);
-}
 
 
 // Animación
 function animate() {
-    if (spotlightMaterial.opacity > 0) {
-        personaje.checkCollision();
-    }
+    personaje.checkGamepad();
+    personaje.checkCollision(raycaster, targets);
 
     renderer.render(scene, camera);
 
