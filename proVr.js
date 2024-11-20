@@ -41,11 +41,11 @@ scene.background = reflectionCube;
 //Camara
 
 // Esfera de luz 
-const spotlightGeometry = new THREE.CylinderGeometry( 0.5, 1, 3, 32 );
+const spotlightGeometry = new THREE.CylinderGeometry(0.5, 1, 3, 32);
 const spotlightMaterial = new THREE.MeshPhongMaterial({
     color: 0xFFFF00,
     transparent: true,
-    opacity: 0 
+    opacity: 0
 });
 
 // const spotlight = new THREE.Mesh(spotlightGeometry, spotlightMaterial);
@@ -54,19 +54,19 @@ const spotlightMaterial = new THREE.MeshPhongMaterial({
 // cube.add(spotlight); 
 
 //Objetivo 
-const geometry1 = new THREE.SphereGeometry(0.5, 16, 16 ); 
-const material1 = new THREE.MeshPhongMaterial( { color: 0xFF0000 } ); 
-const sphere = new THREE.Mesh( geometry1, material1 ); 
-scene.add( sphere );
-sphere.position.set(3,0,0)
+const geometry1 = new THREE.SphereGeometry(0.5, 16, 16);
+const material1 = new THREE.MeshPhongMaterial({ color: 0xFF0000 });
+const sphere = new THREE.Mesh(geometry1, material1);
+scene.add(sphere);
+sphere.position.set(3, 0, 0)
 
 //Piso
-const geometry2 = new THREE.PlaneGeometry( 20, 10 );
-const material2 = new THREE.MeshPhongMaterial( {color: 0x00ff00 , side: THREE.DoubleSide} );
-const piso = new THREE.Mesh( geometry2, material2 );
-scene.add( piso );
-piso.position.y =-1;
-piso.rotation.x = Math.PI/2;
+const geometry2 = new THREE.PlaneGeometry(20, 10);
+const material2 = new THREE.MeshPhongMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+const piso = new THREE.Mesh(geometry2, material2);
+scene.add(piso);
+piso.position.y = -1;
+piso.rotation.x = Math.PI / 2;
 
 // Variable para almacenar el estado del Gamepad
 let gamepad;
@@ -168,32 +168,44 @@ class Personaje {
         this.linternaMaterial.opacity = this.linternaEncendida ? 0.5 : 0; // Simula el haz de luz
     }
 
-    checkGamepad() {
+    // Control de la luz
+
+
+// Función para verificar los botones del Gamepad
+ checkGamepad() {
+    if (gamepad) {
+
+        let lightTimeout;
+        
+        // Obtén el estado actualizado del Gamepad
         const gamepads = navigator.getGamepads();
-        if (gamepads[0]) {
-            this.gamepad = gamepads[0];
-            if (this.gamepad.buttons[0].pressed && !this.lastButtonState) {
-                this.toggleLinterna();
-                this.lastButtonState = true;
-            }
-            if (!this.gamepad.buttons[0].pressed && this.lastButtonState) {
-                this.lastButtonState = false;
+        const currentGamepad = gamepads[gamepad.index];
+
+        if (currentGamepad) {
+            // Verifica si el botón "A" (índice 0) está presionado
+            if (currentGamepad.buttons[0].pressed) {
+                spotlightMaterial.opacity = 0.5; // Enciende la luz
+                clearTimeout(lightTimeout);
+                lightTimeout = setTimeout(() => {
+                    spotlightMaterial.opacity = 0;
+                }, 400); // Apaga la luz después de 0.4 segundos
             }
         }
     }
+}
 
-    checkCollision(raycaster, targets) {
-        if (this.linternaEncendida) {
-            raycaster.set(this.character.position, new THREE.Vector3(0, 0, -1).applyQuaternion(this.character.children[0].quaternion));
+checkCollision(raycaster, targets) {
+    if (this.linternaEncendida) {
+        raycaster.set(this.character.position, new THREE.Vector3(0, 0, -1).applyQuaternion(this.character.children[0].quaternion));
 
-            const intersects = raycaster.intersectObjects(targets);
-            if (intersects.length > 0) {
-                const hit = intersects[0].object;
-                this.scene.remove(hit); // Elimina el objeto
-                console.log("Objeto eliminado:", hit);
-            }
+        const intersects = raycaster.intersectObjects(targets);
+        if (intersects.length > 0) {
+            const hit = intersects[0].object;
+            this.scene.remove(hit); // Elimina el objeto
+            console.log("Objeto eliminado:", hit);
         }
     }
+}
 }
 
 class Enemy {
@@ -225,7 +237,7 @@ class Enemy {
 
         // Calcular el ángulo entre la dirección de la cámara y el enemigo
         const dot = direction.dot(toEnemy);
-        const beingWatched = dot > 0.8; 
+        const beingWatched = dot > 0.8;
         // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera observado
 
         // Cambiar el color del enemigo según esté siendo observado o no
