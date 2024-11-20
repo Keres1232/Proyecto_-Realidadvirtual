@@ -30,12 +30,12 @@ const urls = [
 const reflectionCube = new THREE.CubeTextureLoader().load(urls);
 scene.background = reflectionCube;
 
-// Geometría del cubo
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshPhongMaterial({ color: 0x1E90FF });
-const cube = new THREE.Mesh(geometry, material);
-cube.position.set(0, 1, -2); // Posiciona el cubo frente a la cámara
-scene.add(cube);
+// // Geometría del cubo
+// const geometry = new THREE.BoxGeometry(1, 1, 1);
+// const material = new THREE.MeshPhongMaterial({ color: 0x1E90FF });
+// const cube = new THREE.Mesh(geometry, material);
+// cube.position.set(0, 1, -2); // Posiciona el cubo frente a la cámara
+// scene.add(cube);
 
 //Geomeotria 
 //Camara
@@ -48,10 +48,10 @@ const spotlightMaterial = new THREE.MeshPhongMaterial({
     opacity: 0 
 });
 
-const spotlight = new THREE.Mesh(spotlightGeometry, spotlightMaterial);
-spotlight.position.set(2, 0, 0);
-spotlight.rotation.z = Math.PI/2; 
-cube.add(spotlight); 
+// const spotlight = new THREE.Mesh(spotlightGeometry, spotlightMaterial);
+// spotlight.position.set(2, 0, 0);
+// spotlight.rotation.z = Math.PI/2; 
+// cube.add(spotlight); 
 
 //Objetivo 
 const geometry1 = new THREE.SphereGeometry(0.5, 16, 16 ); 
