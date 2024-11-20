@@ -18,11 +18,6 @@ document.body.appendChild(VRButton.createButton(renderer));
 const ambientLight = new THREE.AmbientLight(0x404040, 2);
 scene.add(ambientLight);
 
-const pointLight = new THREE.PointLight(0xFFA500, 1);
-pointLight.castShadow = true;
-scene.add(pointLight);
-pointLight.position.set(0, 60, 30);
-scene.add(camera);
 
 // Cubemap
 const path = '/penguins (44)/';
@@ -44,7 +39,6 @@ scene.add(cube);
 
 //Geomeotria 
 //Camara
-
 
 // Esfera de luz 
 const spotlightGeometry = new THREE.CylinderGeometry( 0.5, 1, 3, 32 );
@@ -129,9 +123,66 @@ function checkCollision() {
     }
 }
 
-class personaje {
+class Personaje {
 
-    
+    constructor(scene, camera) {
+        this.scene = scene;
+
+        // Crear un contenedor para el personaje
+        this.character = new THREE.Object3D();
+        scene.add(this.character);
+
+        // Posicionar la cámara dentro del personaje
+        this.character.add(camera);
+        camera.position.set(0, 1.6, 0); // Ajustar altura
+
+        // Material semitransparente para el haz de luz
+        this.linternaMaterial = new THREE.MeshPhongMaterial({
+            color: 0xFFFF00,
+            transparent: true,
+            opacity: 0,
+        });
+
+        // Haz de luz simulado
+        const spotlightGeometry = new THREE.CylinderGeometry(0.5, 1, 3, 32);
+        this.hazLuz = new THREE.Mesh(spotlightGeometry, this.linternaMaterial);
+        this.hazLuz.position.set(0, -1.5, -2); // Frente al personaje
+        this.hazLuz.rotation.x = Math.PI / 2;
+        this.character.add(this.hazLuz);
+
+        this.raycaster = new THREE.Raycaster(); // Raycaster para detectar colisiones
+        this.targets = []; // Lista de objetivos
+
+        // Variables de control para activar la linterna
+        this.linternaEncendida = false;
+        this.lightTimeout = null;
+    }
+    toggleLinterna() {
+        // Alternar la linterna encendida y apagada
+        this.linternaEncendida = !this.linternaEncendida;
+        this.linternaMaterial.opacity = this.linternaEncendida ? 0.5 : 0;
+        if (this.linternaEncendida) {
+            // Temporizador para apagar la linterna automáticamente
+            clearTimeout(this.lightTimeout);
+            this.lightTimeout = setTimeout(() => {
+                this.linternaEncendida = false;
+                this.linternaMaterial.opacity = 0;
+            }, 400); // Apaga después de 0.4 segundos
+        }
+    }
+    checkCollision() {
+        // Configurar raycaster
+        this.raycaster.set(this.linterna.position, new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion));
+
+        // Detectar intersecciones con los objetivos
+        const intersects = this.raycaster.intersectObjects(this.targets.map((target) => target.mesh));
+        if (intersects.length > 0) {
+            const hitTarget = intersects[0].object;
+            this.scene.remove(hitTarget); // Eliminar objetivo
+            this.targets = this.targets.filter((target) => target.mesh !== hitTarget);
+            console.log("Objetivo eliminado");
+        }
+    }
     
 }
 
@@ -164,7 +215,7 @@ class Enemy {
 
         // Calcular el ángulo entre la dirección de la cámara y el enemigo
         const dot = direction.dot(toEnemy);
-        const beingWatched = dot > 1; 
+        const beingWatched = dot > 0.8; 
         // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera observado
 
         // Cambiar el color del enemigo según esté siendo observado o no
@@ -192,9 +243,32 @@ class Enemy {
     }
 }
 
+// Clase Objetivo
+class Objetivo {
+    constructor(scene, position = new THREE.Vector3(0, 0, 0)) {
+        const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+        const material = new THREE.MeshPhongMaterial({ color: 0xFF0000 });
+        this.mesh = new THREE.Mesh(geometry, material);
+        this.mesh.position.copy(position);
+        scene.add(this.mesh);
+    }
+}
+
 const enemy = new Enemy(scene, new THREE.Vector3(0, 1, -5), 0.002, 0); // Posición inicial y velocidad
 
+// Crear el personaje
+const personaje = new Personaje(scene, camera);
 
+// Crear objetivos
+for (let i = 0; i < 5; i++) {
+    const position = new THREE.Vector3(
+        Math.random() * 10 - 5,
+        0.5,
+        Math.random() * -10
+    );
+    const target = new Objetivo(scene, position);
+    personaje.targets.push(target);
+}
 
 
 // Animación
