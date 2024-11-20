@@ -202,8 +202,6 @@ class Personaje {
 }
 
 
-
-
 class Enemy {
     constructor(scene, position = new THREE.Vector3(), speed = 0.05, maxDistance = 2) {
         this.scene = scene;
@@ -280,7 +278,7 @@ class Enemy {
         const distanceToCamera = this.mesh.position.distanceTo(camera.position);
 
         // Si el enemigo está a una distancia de 0, reiniciarlo
-        if (distanceToCamera <= 0.001) {
+        if (distanceToCamera <= 0.0001) {
             console.log('Enemy reached the player! Resetting...');
             this.resetEnemy();
             return;
