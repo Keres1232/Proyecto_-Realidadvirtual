@@ -203,27 +203,39 @@ class Personaje {
 
 
 class Enemy {
-    constructor(scene, position = new THREE.Vector3(), speed = 0.05, maxDistance = 2) {
-        // Crear geometría y material para el enemigo
-        const geometry = new THREE.SphereGeometry(0.5, 16, 16);
-        this.material = new THREE.MeshPhongMaterial({ color: 0xFF0000 }); // Color inicial: rojo
-        this.mesh = new THREE.Mesh(geometry, this.material);
-
-        // Posicionar el enemigo
-        this.mesh.position.copy(position);
+    constructor(scene, fbxPath, position = new THREE.Vector3(), speed = 0.08, maxDistance = 2) {
+        this.mesh = null; // Almacenará el modelo cargado
         this.speed = speed;
-        this.maxDistance = maxDistance; // Distancia máxima permitida a la cámara
+        this.maxDistance = maxDistance;
 
-        // Agregar el enemigo a la escena
-        scene.add(this.mesh);
+        // Cargar el modelo FBX
+        const loader = new FBXLoader();
+        loader.load(
+            fbxPath,
+            (fbx) => {
+                // Escalar y posicionar el modelo FBX
+                fbx.scale.set(0.01, 0.01, 0.01); // Ajusta el tamaño según sea necesario
+                fbx.position.copy(position);
+
+                // Almacenar el modelo y agregarlo a la escena
+                this.mesh = fbx;
+                scene.add(this.mesh);
+            },
+            undefined,
+            (error) => {
+                console.error('Error cargando el modelo FBX:', error);
+            }
+        );
     }
 
     /**
-     * Verifica si el enemigo está siendo "observado" por la cámara y actualiza su color.
+     * Verifica si el enemigo está siendo "observado" por la cámara.
      * @param {THREE.Camera} camera - La cámara de la escena.
      * @returns {boolean} - true si el enemigo está siendo observado, de lo contrario, false.
      */
     isBeingWatched(camera) {
+        if (!this.mesh) return false; // Si el modelo aún no está cargado
+
         const direction = new THREE.Vector3();
         camera.getWorldDirection(direction); // Dirección hacia donde mira la cámara
         const toEnemy = new THREE.Vector3();
@@ -231,13 +243,7 @@ class Enemy {
 
         // Calcular el ángulo entre la dirección de la cámara y el enemigo
         const dot = direction.dot(toEnemy);
-        const beingWatched = dot > 0.8; 
-        // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera observado
-
-        // Cambiar el color del enemigo según esté siendo observado o no
-        this.material.color.set(beingWatched ? 0x00FF00 : 0xFF0000); // Verde si está siendo observado, rojo si no
-
-        return beingWatched;
+        return dot > 0.8; // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera observado
     }
 
     /**
@@ -245,6 +251,8 @@ class Enemy {
      * @param {THREE.Camera} camera - La cámara de la escena.
      */
     moveTowardCamera(camera) {
+        if (!this.mesh) return; // Si el modelo aún no está cargado
+
         const distanceToCamera = this.mesh.position.distanceTo(camera.position);
 
         // Si está dentro de la distancia máxima o siendo observado, no se mueve
@@ -259,7 +267,7 @@ class Enemy {
     }
 }
 
-const enemy = new Enemy(scene, new THREE.Vector3(0, 1, -5), 0.002, 0);
+const enemy = new Enemy(scene, './monstruo1.fbx', new THREE.Vector3(0, 1, -5), 0.002, 0);
 
 
 
