@@ -133,6 +133,55 @@ class personaje {
     
 }
 
+class Enemy {
+    constructor(scene, position = new THREE.Vector3(), speed = 0.05) {
+        // Crear geometría y material para el enemigo
+        const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+        const material = new THREE.MeshPhongMaterial({ color: 0xFF0000 });
+        this.mesh = new THREE.Mesh(geometry, material);
+
+        // Posicionar el enemigo
+        this.mesh.position.copy(position);
+        this.speed = speed;
+
+        // Agregar el enemigo a la escena
+        scene.add(this.mesh);
+    }
+
+    /**
+     * Verifica si el enemigo está siendo "observado" por la cámara.
+     * @param {THREE.Camera} camera - La cámara de la escena.
+     * @returns {boolean} - `true` si el enemigo está siendo observado, de lo contrario, `false`.
+     */
+    isBeingWatched(camera) {
+        const direction = new THREE.Vector3();
+        camera.getWorldDirection(direction); // Dirección hacia donde mira la cámara
+        const toEnemy = new THREE.Vector3();
+        toEnemy.subVectors(this.mesh.position, camera.position).normalize(); // Dirección hacia el enemigo
+
+        // Calcular el ángulo entre la dirección de la cámara y el enemigo
+        const dot = direction.dot(toEnemy);
+        return dot > 0.8; // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera que está siendo observado
+    }
+
+    /**
+     * Mueve el enemigo hacia la cámara si no está siendo observado.
+     * @param {THREE.Camera} camera - La cámara de la escena.
+     */
+    moveTowardCamera(camera) {
+        if (!this.isBeingWatched(camera)) {
+            const direction = new THREE.Vector3();
+            direction.subVectors(camera.position, this.mesh.position).normalize(); // Dirección hacia la cámara
+            this.mesh.position.addScaledVector(direction, this.speed); // Mover en esa dirección
+        }
+    }
+}
+
+const enemy = new Enemy(scene, new THREE.Vector3(3, 1, -5), 0.02); // Posición inicial y velocidad
+
+
+
+
 // Animación
 function animate() {
     if (spotlightMaterial.opacity > 0) {
@@ -140,6 +189,9 @@ function animate() {
     }
 
     renderer.render(scene, camera);
+
+    // Mover al enemigo
+    enemy.moveTowardCamera(camera);
 
     // Verifica el estado del Gamepad en cada frame
     checkGamepad();
