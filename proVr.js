@@ -171,15 +171,15 @@ class Personaje {
     checkGamepad() {
         let lightTimeout;
         const gamepads = navigator.getGamepads();
-        const currentGamepad = gamepads[gamepad.index];
-        if (currentGamepad.buttons[0].pressed) {
+        
+        if (gamepads[0]) {
             this.linternaMaterial.opacity = this.linternaEncendida ? 0.5 : 0; // Enciende la luz
             clearTimeout(lightTimeout);
             lightTimeout = setTimeout(() => {
                 this.linternaMaterial.opacity = 0;
             }, 400); // Apaga la luz después de 0.4 segundos
         }
-        }
+        
     }
 
     checkCollision(raycaster, targets) {
@@ -195,6 +195,7 @@ class Personaje {
         }
     }
 }
+
 
 class Enemy {
     constructor(scene, position = new THREE.Vector3(), speed = 0.05, maxDistance = 2) {
