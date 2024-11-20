@@ -212,10 +212,10 @@ class Enemy {
         // Cargar el modelo FBX
         const loader = new FBXLoader();
         loader.load(
-            './monstruo1.fbx',
+            '/monstruo1.fbx',
             (fbx) => {
                 this.mesh = fbx;
-                this.mesh.scale.set(0.1, 0.1, 0.1); // Escalar modelo si es necesario
+                this.mesh.scale.set(0.01, 0.01, 0.01); // Escalar modelo si es necesario
                 this.mesh.position.copy(this.position);
                 this.scene.add(this.mesh);
             },
@@ -298,19 +298,6 @@ class Enemy {
 
 
 
-// En el loop de animación, llama a `moveTowardCamera` para mover al enemigo
-function animate() {
-    requestAnimationFrame(animate);
-
-    if (enemy) {
-        enemy.moveTowardCamera(camera);
-    }
-
-    renderer.render(scene, camera);
-}
-
-animate();
-
 
 // Objetivo para colisiones
 const targets = [];
@@ -337,6 +324,10 @@ function animate() {
     personaje.checkCollision(raycaster, targets);
 
     renderer.render(scene, camera);
+
+    if (enemy) {
+        enemy.moveTowardCamera(camera);
+    }
 
     // Mover al enemigo
     enemy.moveTowardCamera(camera);
