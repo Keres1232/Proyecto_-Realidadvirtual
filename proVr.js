@@ -134,7 +134,7 @@ class personaje {
 }
 
 class Enemy {
-    constructor(scene, position = new THREE.Vector3(), speed = 0.05) {
+    constructor(scene, position = new THREE.Vector3(), speed = 0.05, maxDistance = 2) {
         // Crear geometría y material para el enemigo
         const geometry = new THREE.SphereGeometry(0.5, 16, 16);
         const material = new THREE.MeshPhongMaterial({ color: 0xFF0000 });
@@ -143,6 +143,7 @@ class Enemy {
         // Posicionar el enemigo
         this.mesh.position.copy(position);
         this.speed = speed;
+        this.maxDistance = maxDistance
 
         // Agregar el enemigo a la escena
         scene.add(this.mesh);
@@ -169,15 +170,21 @@ class Enemy {
      * @param {THREE.Camera} camera - La cámara de la escena.
      */
     moveTowardCamera(camera) {
-        if (!this.isBeingWatched(camera)) {
-            const direction = new THREE.Vector3();
-            direction.subVectors(camera.position, this.mesh.position).normalize(); // Dirección hacia la cámara
-            this.mesh.position.addScaledVector(direction, this.speed); // Mover en esa dirección
+        const distanceToCamera = this.mesh.position.distanceTo(camera.position);
+
+        // Si está dentro de la distancia máxima o siendo observado, no se mueve
+        if (distanceToCamera <= this.maxDistance || this.isBeingWatched(camera)) {
+            return;
         }
+
+        // Mover al enemigo hacia la cámara
+        const direction = new THREE.Vector3();
+        direction.subVectors(camera.position, this.mesh.position).normalize(); // Dirección hacia la cámara
+        this.mesh.position.addScaledVector(direction, this.speed); // Mover en esa dirección
     }
 }
 
-const enemy = new Enemy(scene, new THREE.Vector3(3, 1, -5), 0.02); // Posición inicial y velocidad
+const enemy = new Enemy(scene, new THREE.Vector3(3, 1, -5), 0.002, 3); // Posición inicial y velocidad
 
 
 
