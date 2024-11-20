@@ -215,7 +215,7 @@ class Enemy {
             './monstruo1.fbx',
             (fbx) => {
                 this.mesh = fbx;
-                this.mesh.scale.set(0.001, 0.001, 0.001); // Escalar modelo si es necesario
+                this.mesh.scale.set(0.01, 0.01, 0.01); // Escalar modelo si es necesario
                 this.mesh.position.copy(this.position);
                 this.scene.add(this.mesh);
             },
@@ -278,7 +278,7 @@ class Enemy {
         const distanceToCamera = this.mesh.position.distanceTo(camera.position);
 
         // Si el enemigo está a una distancia de 0, reiniciarlo
-        if (distanceToCamera <= 0.0001) {
+        if (distanceToCamera <= 0) {
             console.log('Enemy reached the player! Resetting...');
             this.resetEnemy();
             return;
