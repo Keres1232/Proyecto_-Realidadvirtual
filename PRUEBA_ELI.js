@@ -225,10 +225,10 @@ const personaje = new Personaje(scene, camera);
 ////////////////////////////////////////////////////////////////////////////////////////
 
 // Crear un cubo con nombre "Cámara"
-const cameraCubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-const cameraCubeMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+const cameraCubeGeometry = new THREE.BoxGeometry(1, 0.5, 0.5);
+const cameraCubeMaterial = new THREE.MeshPhongMaterial({ color: 0xfff0000 });
 const cameraCube = new THREE.Mesh(cameraCubeGeometry, cameraCubeMaterial);
-cameraCube.position.set(0, -2, -2);
+cameraCube.position.set(0, 1, -1);
 personaje.character.add(cameraCube);
 
 
@@ -240,5 +240,5 @@ function animate() {
     enemy.moveTowardCamera(camera);
     checkGamepad();
 }
-//
+
 renderer.setAnimationLoop(animate);
