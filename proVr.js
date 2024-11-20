@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
-
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
@@ -15,6 +15,9 @@ renderer.xr.enabled = true; // Habilitar VR
 
 document.body.appendChild(renderer.domElement);
 document.body.appendChild(VRButton.createButton(renderer));
+
+// Agregar OrbitControls
+const controls = new OrbitControls(camera, renderer.domElement);
 
 // Luz ambiental
 const ambientLight = new THREE.AmbientLight(0x404040, 2);
