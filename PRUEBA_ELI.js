@@ -225,17 +225,28 @@ const personaje = new Personaje(scene, camera);
 ////////////////////////////////////////////////////////////////////////////////////////
 
 // Crear un cubo con nombre "Cámara"
-const cameraCubeGeometry = new THREE.BoxGeometry(1, 0.5, 0.5);
-const cameraCubeMaterial = new THREE.MeshPhongMaterial({ color: 0xfff0000 });
-const cameraCube = new THREE.Mesh(cameraCubeGeometry, cameraCubeMaterial);
-cameraCube.position.set(0, 1, -1);
-personaje.character.add(cameraCube);
+const cameraCubeGeometry = new THREE.BoxGeometry(1, 0.5, 0.2);
+const cameraCubeMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+const camara = new THREE.Mesh(cameraCubeGeometry, cameraCubeMaterial);
+
+// Agregar el cubo al personaje
+camara.position.set(0, 1, -2); // Posición relativa al personaje/cámara
+personaje.character.add(camara); // El cubo seguirá al personaje automáticamente
+
+// Actualizar posición y orientación si se necesita explícito
+function syncCameraCube() {
+    // El cubo ya está vinculado a `personaje.character`, así que no necesita actualizaciones adicionales.
+    // Si quisieras desvincularlo y manejarlo manualmente, actualiza aquí:
+    camara.position.copy(camera.position);
+    camara.quaternion.copy(camera.quaternion);
+}
 
 
 // Animación
 function animate() {
     personaje.checkGamepad();
     personaje.checkCollision(raycaster, targets);
+    syncCameraCube();
     renderer.render(scene, camera);
     enemy.moveTowardCamera(camera);
     checkGamepad();
