@@ -212,10 +212,10 @@ class Enemy {
         // Cargar el modelo FBX
         const loader = new FBXLoader();
         loader.load(
-            './monstruo1.fbx',
+            './path/to/your/model.fbx',
             (fbx) => {
                 this.mesh = fbx;
-                this.mesh.scale.set(0.01, 0.01, 0.01); // Escalar modelo si es necesario
+                this.mesh.scale.set(0.1, 0.1, 0.1); // Escalar modelo si es necesario
                 this.mesh.position.copy(this.position);
                 this.scene.add(this.mesh);
             },
@@ -234,7 +234,7 @@ class Enemy {
      */
     generateRandomPosition() {
         const x = Math.random() * 10 - 5; // Rango aleatorio entre -5 y 5
-        const y = -1; // Altura fija
+        const y = 1; // Altura fija
         const z = Math.random() * 10 - 5; // Rango aleatorio entre -5 y 5
         return new THREE.Vector3(x, y, z);
     }
@@ -278,7 +278,7 @@ class Enemy {
         const distanceToCamera = this.mesh.position.distanceTo(camera.position);
 
         // Si el enemigo está a una distancia de 0, reiniciarlo
-        if (distanceToCamera <= 0) {
+        if (distanceToCamera <= 0.1) {
             console.log('Enemy reached the player! Resetting...');
             this.resetEnemy();
             return;
@@ -295,6 +295,21 @@ class Enemy {
         this.mesh.position.addScaledVector(direction, this.speed); // Mover en esa dirección
     }
 }
+
+
+
+// En el loop de animación, llama a `moveTowardCamera` para mover al enemigo
+function animate() {
+    requestAnimationFrame(animate);
+
+    if (enemy) {
+        enemy.moveTowardCamera(camera);
+    }
+
+    renderer.render(scene, camera);
+}
+
+animate();
 
 
 // Objetivo para colisiones
