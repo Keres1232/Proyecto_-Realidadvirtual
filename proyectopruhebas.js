@@ -191,3 +191,61 @@ function animate() {
     renderer.render(scene, camera);
 }
 renderer.setAnimationLoop(animate);
+
+
+class Enemy {
+    constructor(scene, position = new THREE.Vector3(), speed = 0.05, maxDistance = 2) {
+        // Crear geometría y material para el enemigo
+        const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+        this.material = new THREE.MeshPhongMaterial({ color: 0xFF0000 }); // Color inicial: rojo
+        this.mesh = new THREE.Mesh(geometry, this.material);
+
+        // Posicionar el enemigo
+        this.mesh.position.copy(position);
+        this.speed = speed;
+        this.maxDistance = maxDistance; // Distancia máxima permitida a la cámara
+
+        // Agregar el enemigo a la escena
+        scene.add(this.mesh);
+    }
+
+    /**
+     * Verifica si el enemigo está siendo "observado" por la cámara y actualiza su color.
+     * @param {THREE.Camera} camera - La cámara de la escena.
+     * @returns {boolean} - `true` si el enemigo está siendo observado, de lo contrario, `false`.
+     */
+    isBeingWatched(camera) {
+        const direction = new THREE.Vector3();
+        camera.getWorldDirection(direction); // Dirección hacia donde mira la cámara
+        const toEnemy = new THREE.Vector3();
+        toEnemy.subVectors(this.mesh.position, camera.position).normalize(); // Dirección hacia el enemigo
+
+        // Calcular el ángulo entre la dirección de la cámara y el enemigo
+        const dot = direction.dot(toEnemy);
+        const beingWatched = dot > 0.8; 
+        // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera observado
+
+        // Cambiar el color del enemigo según esté siendo observado o no
+        this.material.color.set(beingWatched ? 0x00FF00 : 0xFF0000); // Verde si está siendo observado, rojo si no
+
+        return beingWatched;
+    }
+
+    /**
+     * Mueve el enemigo hacia la cámara si no está siendo observado y no excede la distancia máxima.
+     * @param {THREE.Camera} camera - La cámara de la escena.
+     */
+    moveTowardCamera(camera) {
+        const distanceToCamera = this.mesh.position.distanceTo(camera.position);
+
+        // Si está dentro de la distancia máxima o siendo observado, no se mueve
+        if (distanceToCamera <= this.maxDistance || this.isBeingWatched(camera)) {
+            return;
+        }
+
+        // Mover al enemigo hacia la cámara
+        const direction = new THREE.Vector3();
+        direction.subVectors(camera.position, this.mesh.position).normalize(); // Dirección hacia la cámara
+        this.mesh.position.addScaledVector(direction, this.speed); // Mover en esa dirección
+    }
+}
