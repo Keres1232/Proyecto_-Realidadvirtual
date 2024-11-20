@@ -277,7 +277,7 @@ class Enemy {
         const distanceToCamera = this.mesh.position.distanceTo(camera.position);
 
         // Si el enemigo está a una distancia de 0, reiniciarlo
-        if (distanceToCamera <= 0.01) {
+        if (distanceToCamera <= 0.001) {
             console.log('Enemy reached the player! Resetting...');
             this.resetEnemy();
             return;
@@ -295,9 +295,6 @@ class Enemy {
     }
 }
 
-// Crear un enemigo con posición inicial aleatoria
-const initialPosition = new THREE.Vector3(Math.random() * 10 - 5, 1, Math.random() * 10 - 5);
-
 
 // Objetivo para colisiones
 const targets = [];
@@ -310,8 +307,9 @@ for (let i = 0; i < 3; i++) {
     targets.push(target);
 }
 
-const enemy = new Enemy(scene, new THREE.Vector3(0, 1, -5), 0.002, 0); // Posición inicial y velocidad
-
+// Crear un enemigo con posición inicial aleatoria
+const initialPosition = new THREE.Vector3(Math.random() * 10 - 5, 1, Math.random() * 10 - 5);
+const enemy = new Enemy(scene, initialPosition, 0.02, 2);
 // Crear el personaje
 const personaje = new Personaje(scene, camera);
 
