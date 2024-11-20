@@ -1,215 +1,152 @@
 import * as THREE from 'three';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 3000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+class Personaje {
+    constructor(scene, camera) {
+        this.scene = scene;
 
+        // Crear un contenedor para el personaje
+        this.character = new THREE.Object3D();
+        scene.add(this.character);
 
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.xr.enabled = true; // Habilitar VR
+        // Posicionar la cámara dentro del personaje
+        this.character.add(camera);
+        camera.position.set(0, 1.6, 0); // Ajustar altura
 
-document.body.appendChild(renderer.domElement);
-document.body.appendChild(VRButton.createButton(renderer));
+        // Linterna (luz puntual)
+        this.linterna = new THREE.PointLight(0xFFFFFF, 1, 10); // Luz blanca
+        this.linterna.position.set(0, 1.6, 0); // Nivel de la cámara
+        this.character.add(this.linterna);
+        this.linternaEncendida = false; // Estado inicial de la linterna
 
-// Luz ambiental
-const ambientLight = new THREE.AmbientLight(0x404040, 2);
-scene.add(ambientLight);
+        // Material semitransparente para el haz de luz
+        this.linternaMaterial = new THREE.MeshPhongMaterial({
+            color: 0xFFFF00,
+            transparent: true,
+            opacity: 0,
+        });
 
-const pointLight = new THREE.PointLight(0xFFA500, 1);
-pointLight.castShadow = true;
-scene.add(pointLight);
-pointLight.position.set(0, 60, 30);
-scene.add(camera);
+        // Haz de luz simulado
+        const spotlightGeometry = new THREE.CylinderGeometry(0.5, 1, 3, 32);
+        this.hazLuz = new THREE.Mesh(spotlightGeometry, this.linternaMaterial);
+        this.hazLuz.position.set(0, -1.5, -2); // Frente al personaje
+        this.hazLuz.rotation.x = Math.PI / 2;
+        this.character.add(this.hazLuz);
 
-// Cubemap
-const path = '/penguins (44)/';
-const format = '.jpg';
-const urls = [
-    path + 'lf' + format, path + 'rt' + format,
-    path + 'up' + format, path + 'dn' + format,
-    path + 'ft' + format, path + 'bk' + format,
-];
-const reflectionCube = new THREE.CubeTextureLoader().load(urls);
-scene.background = reflectionCube;
+        // Controlador de Gamepad
+        this.gamepad = null;
 
-// Geometría del cubo
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshPhongMaterial({ color: 0x1E90FF });
-const cube = new THREE.Mesh(geometry, material);
-cube.position.set(0, 1, -2); // Posiciona el cubo frente a la cámara
-scene.add(cube);
+        // Estado del botón
+        this.lastButtonState = false;
+    }
 
-//Geomeotria 
-//Camara
+    toggleLinterna() {
+        this.linternaEncendida = !this.linternaEncendida;
+        this.linterna.visible = this.linternaEncendida;
+        this.linternaMaterial.opacity = this.linternaEncendida ? 0.5 : 0; // Simula el haz de luz
+    }
 
-
-// Esfera de luz 
-const spotlightGeometry = new THREE.CylinderGeometry( 0.5, 1, 3, 32 );
-const spotlightMaterial = new THREE.MeshPhongMaterial({
-    color: 0xFFFF00,
-    transparent: true,
-    opacity: 0 
-});
-
-const spotlight = new THREE.Mesh(spotlightGeometry, spotlightMaterial);
-spotlight.position.set(2, 0, 0);
-spotlight.rotation.z = Math.PI/2; 
-cube.add(spotlight); 
-
-//Objetivo 
-const geometry1 = new THREE.SphereGeometry(0.5, 16, 16 ); 
-const material1 = new THREE.MeshPhongMaterial( { color: 0xFF0000 } ); 
-const sphere = new THREE.Mesh( geometry1, material1 ); 
-scene.add( sphere );
-sphere.position.set(3,0,0)
-
-//Piso
-const geometry2 = new THREE.PlaneGeometry( 20, 10 );
-const material2 = new THREE.MeshPhongMaterial( {color: 0x00ff00 , side: THREE.DoubleSide} );
-const piso = new THREE.Mesh( geometry2, material2 );
-scene.add( piso );
-piso.position.y =-1;
-piso.rotation.x = Math.PI/2;
-
-// Variable para almacenar el estado del Gamepad
-let gamepad;
-
-// Detecta cuándo se conecta un Gamepad
-window.addEventListener("gamepadconnected", (event) => {
-    console.log("Gamepad conectado:", event.gamepad);
-    gamepad = event.gamepad; // Guarda la referencia al Gamepad conectado
-});
-
-// Detecta cuándo se desconecta un Gamepad
-window.addEventListener("gamepaddisconnected", (event) => {
-    console.log("Gamepad desconectado:", event.gamepad);
-    gamepad = null; // Limpia la referencia al Gamepad
-});
-
-// Control de la luz
-let lightTimeout;
-
-// Función para verificar los botones del Gamepad
-function checkGamepad() {
-    if (gamepad) {
-        // Obtén el estado actualizado del Gamepad
+    checkGamepad() {
         const gamepads = navigator.getGamepads();
-        const currentGamepad = gamepads[gamepad.index];
+        if (gamepads[0]) {
+            this.gamepad = gamepads[0];
+            if (this.gamepad.buttons[0].pressed && !this.lastButtonState) {
+                this.toggleLinterna();
+                this.lastButtonState = true;
+            }
+            if (!this.gamepad.buttons[0].pressed && this.lastButtonState) {
+                this.lastButtonState = false;
+            }
+        }
+    }
 
-        if (currentGamepad) {
-            // Verifica si el botón "A" (índice 0) está presionado
-            if (currentGamepad.buttons[0].pressed) {
-                spotlightMaterial.opacity = 0.5; // Enciende la luz
-                clearTimeout(lightTimeout);
-                lightTimeout = setTimeout(() => {
-                    spotlightMaterial.opacity = 0;
-                }, 400); // Apaga la luz después de 0.4 segundos
+    checkCollision(raycaster, targets) {
+        if (this.linternaEncendida) {
+            raycaster.set(this.character.position, new THREE.Vector3(0, 0, -1).applyQuaternion(this.character.children[0].quaternion));
+
+            const intersects = raycaster.intersectObjects(targets);
+            if (intersects.length > 0) {
+                const hit = intersects[0].object;
+                this.scene.remove(hit); // Elimina el objeto
+                console.log("Objeto eliminado:", hit);
             }
         }
     }
 }
 
-// Colisiones
-const raycaster = new THREE.Raycaster();
-let score = 0;
-
-// Función para detectar colision
-function checkCollision() {
-    // rayo desde la luz en la dirección de la esfera
-    raycaster.set(spotlight.position, new THREE.Vector3(1, 0, 0).normalize()); // Dirección de la luz
-    const intersects = raycaster.intersectObject(sphere);
-
-    if (intersects.length > 0) {  // Si hay una colisión, incrementa la puntuación y oculta la esfera
-        scene.remove(sphere);
-        score += 1;
-        console.log("Puntuación:", score);
-    }
-}
-
-class personaje {
-    
-}
-
 class Enemy {
     constructor(scene, position = new THREE.Vector3(), speed = 0.05, maxDistance = 2) {
-        // Crear geometría y material para el enemigo
         const geometry = new THREE.SphereGeometry(0.5, 16, 16);
-        this.material = new THREE.MeshPhongMaterial({ color: 0xFF0000 }); // Color inicial: rojo
+        this.material = new THREE.MeshPhongMaterial({ color: 0xFF0000 });
         this.mesh = new THREE.Mesh(geometry, this.material);
-
-        // Posicionar el enemigo
         this.mesh.position.copy(position);
         this.speed = speed;
-        this.maxDistance = maxDistance; // Distancia máxima permitida a la cámara
-
-        // Agregar el enemigo a la escena
+        this.maxDistance = maxDistance;
         scene.add(this.mesh);
     }
 
-    /**
-     * Verifica si el enemigo está siendo "observado" por la cámara y actualiza su color.
-     * @param {THREE.Camera} camera - La cámara de la escena.
-     * @returns {boolean} - `true` si el enemigo está siendo observado, de lo contrario, `false`.
-     */
     isBeingWatched(camera) {
         const direction = new THREE.Vector3();
-        camera.getWorldDirection(direction); // Dirección hacia donde mira la cámara
+        camera.getWorldDirection(direction);
         const toEnemy = new THREE.Vector3();
-        toEnemy.subVectors(this.mesh.position, camera.position).normalize(); // Dirección hacia el enemigo
-
-        // Calcular el ángulo entre la dirección de la cámara y el enemigo
+        toEnemy.subVectors(this.mesh.position, camera.position).normalize();
         const dot = direction.dot(toEnemy);
-        const beingWatched = dot > 1; 
-        // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera observado
-
-        // Cambiar el color del enemigo según esté siendo observado o no
-        this.material.color.set(beingWatched ? 0x00FF00 : 0xFF0000); // Verde si está siendo observado, rojo si no
-
+        const beingWatched = dot > 0.5; // Observado si el ángulo es menor a ~60°
+        this.material.color.set(beingWatched ? 0x00FF00 : 0xFF0000);
         return beingWatched;
     }
 
-    /**
-     * Mueve el enemigo hacia la cámara si no está siendo observado y no excede la distancia máxima.
-     * @param {THREE.Camera} camera - La cámara de la escena.
-     */
     moveTowardCamera(camera) {
         const distanceToCamera = this.mesh.position.distanceTo(camera.position);
-
-        // Si está dentro de la distancia máxima o siendo observado, no se mueve
-        if (distanceToCamera <= this.maxDistance || this.isBeingWatched(camera)) {
-            return;
-        }
-
-        // Mover al enemigo hacia la cámara
+        if (distanceToCamera <= this.maxDistance || this.isBeingWatched(camera)) return;
         const direction = new THREE.Vector3();
-        direction.subVectors(camera.position, this.mesh.position).normalize(); // Dirección hacia la cámara
-        this.mesh.position.addScaledVector(direction, this.speed); // Mover en esa dirección
+        direction.subVectors(camera.position, this.mesh.position).normalize();
+        this.mesh.position.addScaledVector(direction, this.speed);
     }
 }
 
-const enemy = new Enemy(scene, new THREE.Vector3(0, 1, -5), 0.002, 0); // Posición inicial y velocidad
+// Configuración de la escena
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.xr.enabled = true;
+document.body.appendChild(renderer.domElement);
+document.body.appendChild(VRButton.createButton(renderer));
 
+// Luz ambiental
+const ambientLight = new THREE.AmbientLight(0x404040, 1);
+scene.add(ambientLight);
 
+// Piso
+const geometry2 = new THREE.PlaneGeometry(20, 10);
+const material2 = new THREE.MeshPhongMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+const piso = new THREE.Mesh(geometry2, material2);
+scene.add(piso);
+piso.position.y = -1;
+piso.rotation.x = Math.PI / 2;
 
+// Crear personaje y enemigo
+const personaje = new Personaje(scene, camera);
+const enemy = new Enemy(scene, new THREE.Vector3(0, 1, -5), 0.01, 3);
+
+// Objetivo para colisiones
+const targets = [];
+const targetGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+const targetMaterial = new THREE.MeshPhongMaterial({ color: 0x0000FF });
+for (let i = 0; i < 3; i++) {
+    const target = new THREE.Mesh(targetGeometry, targetMaterial);
+    target.position.set(i * 2 - 2, 0, -5);
+    scene.add(target);
+    targets.push(target);
+}
 
 // Animación
+const raycaster = new THREE.Raycaster();
 function animate() {
-    if (spotlightMaterial.opacity > 0) {
-        checkCollision();
-    }
-
-    renderer.render(scene, camera);
-
-    // Mover al enemigo
+    personaje.checkGamepad();
+    personaje.checkCollision(raycaster, targets);
     enemy.moveTowardCamera(camera);
-
-    // Verifica el estado del Gamepad en cada frame
-    checkGamepad();
-
-
+    renderer.render(scene, camera);
 }
-
 renderer.setAnimationLoop(animate);
