@@ -106,12 +106,6 @@ class Personaje {
         this.character.add(camera);
         camera.position.set(0, 1.6, 0); // Ajustar altura
 
-        // Linterna (luz puntual)
-        this.linterna = new THREE.PointLight(0xFFFFFF, 1, 10); // Luz blanca
-        this.linterna.position.set(0, 1.6, 0); // Nivel de la cámara
-        this.character.add(this.linterna);
-        this.linternaEncendida = false; // Estado inicial de la linterna
-
         // Controlador de Gamepad
         this.gamepad = null;
 
@@ -123,30 +117,8 @@ class Personaje {
         let lightTimeout;
         const gamepads = navigator.getGamepads();
         
-        if (gamepads[0]) {
-            this.linternaMaterial.opacity = this.linternaEncendida ? 0.5 : 0; // Enciende la luz
-            clearTimeout(lightTimeout);
-            lightTimeout = setTimeout(() => {
-                this.linternaMaterial.opacity = 0;
-            }, 400); // Apaga la luz después de 0.4 segundos
-        }
-        
-    }
-
-    checkCollision(raycaster, targets) {
-        if (this.linternaEncendida) {
-            raycaster.set(this.character.position, new THREE.Vector3(0, 0, -1).applyQuaternion(this.character.children[0].quaternion));
-
-            const intersects = raycaster.intersectObjects(targets);
-            if (intersects.length > 0) {
-                const hit = intersects[0].object;
-                this.scene.remove(hit); // Elimina el objeto
-                console.log("Objeto eliminado:", hit);
-            }
-        }
     }
 }
-
 
 class Enemy {
     constructor(scene, position = new THREE.Vector3(), speed = 0.05, maxDistance = 2) {
@@ -221,32 +193,39 @@ for (let i = 0; i < 3; i++) {
 const enemy = new Enemy(scene, new THREE.Vector3(0, 1, -5), 0.002, 0);
 // Crear el personaje
 const personaje = new Personaje(scene, camera);
+const camara = new Personaje(scene, camera);
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-// Crear un cubo con nombre "Cámara"
-const cameraCubeGeometry = new THREE.BoxGeometry(1, 0.5, 0.2);
-const cameraCubeMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
-const camara = new THREE.Mesh(cameraCubeGeometry, cameraCubeMaterial);
+// class CamaraP{
+//     constructor(scene, camera) {
+//         this.scene = scene;
 
-// Agregar el cubo al personaje
-camara.position.set(0, 1, -2); // Posición relativa al personaje/cámara
-personaje.character.add(camara); // El cubo seguirá al personaje automáticamente
+//         // Crear geometría y material para el enemigo
+//         const cameraCubeGeometry = new THREE.BoxGeometry(1, 0.5, 0.2);
+//         this.cameraCubeMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 }); // Color inicial: rojo
+//         this.camara = new THREE.Mesh(cameraCubeGeometry, cameraCubeMaterial);
 
-// Actualizar posición y orientación si se necesita explícito
-function syncCameraCube() {
-    // El cubo ya está vinculado a `personaje.character`, así que no necesita actualizaciones adicionales.
-    // Si quisieras desvincularlo y manejarlo manualmente, actualiza aquí:
-    camara.position.copy(camera.position);
-    camara.quaternion.copy(camera.quaternion);
-}
+//         // Posicionar la cámara dentro del personaje
+//         this.camara.add(camera);
+//         this.camara.position.set(0, 1.6, -2); // Ajustar altura
 
+//         // Controlador de Gamepad
+//         this.gamepad = null;
+
+//         // Estado del botón
+//         this.lastButtonState = false;
+//     }
+//     checkGamepad() {
+//         const gamepads = navigator.getGamepads();     
+//     }
+// }
 
 // Animación
 function animate() {
     personaje.checkGamepad();
+    camara.checkGamepad();
     personaje.checkCollision(raycaster, targets);
-    syncCameraCube();
     renderer.render(scene, camera);
     enemy.moveTowardCamera(camera);
     checkGamepad();
