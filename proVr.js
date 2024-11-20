@@ -134,10 +134,10 @@ class personaje {
 }
 
 class Enemy {
-    constructor(scene, position = new THREE.Vector3(), speed = 0.05, maxDistance = 0) {
+    constructor(scene, position = new THREE.Vector3(), speed = 0.05, maxDistance = 0.5) {
         // Crear geometría y material para el enemigo
         const geometry = new THREE.SphereGeometry(0.5, 16, 16);
-        const material = new THREE.MeshPhongMaterial({ color: 0xFF0000 });
+        const material = new THREE.MeshPhongMaterial({ color: 0x16bdd5 });
         this.mesh = new THREE.Mesh(geometry, material);
 
         // Posicionar el enemigo
