@@ -35,29 +35,29 @@ const urls = [
 const reflectionCube = new THREE.CubeTextureLoader().load(urls);
 scene.background = reflectionCube;
 
-// // Geometría del cubo
-// const geometry = new THREE.BoxGeometry(1, 1, 1);
-// const material = new THREE.MeshPhongMaterial({ color: 0x1E90FF });
-// const cube = new THREE.Mesh(geometry, material);
-// cube.position.set(0, 1, -2); // Posiciona el cubo frente a la cámara
-// scene.add(cube);
+// Geometría del cubo
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = new THREE.MeshPhongMaterial({ color: 0x1E90FF });
+const cube = new THREE.Mesh(geometry, material);
+cube.position.set(0, 1, -2); // Posiciona el cubo frente a la cámara
+scene.add(cube);
 
-// //Geomeotria 
-// //Camara
+//Geomeotria 
+//Camara
 
 
-// // Esfera de luz 
-// const spotlightGeometry = new THREE.CylinderGeometry( 0.5, 1, 3, 32 );
-// const spotlightMaterial = new THREE.MeshPhongMaterial({
-//     color: 0xFFFF00,
-//     transparent: true,
-//     opacity: 0 
-// });
+// Esfera de luz 
+const spotlightGeometry = new THREE.CylinderGeometry( 0.5, 1, 3, 32 );
+const spotlightMaterial = new THREE.MeshPhongMaterial({
+    color: 0xFFFF00,
+    transparent: true,
+    opacity: 0 
+});
 
-// const spotlight = new THREE.Mesh(spotlightGeometry, spotlightMaterial);
-// spotlight.position.set(2, 0, 0);
-// spotlight.rotation.z = Math.PI/2; 
-// cube.add(spotlight); 
+const spotlight = new THREE.Mesh(spotlightGeometry, spotlightMaterial);
+spotlight.position.set(2, 0, 0);
+spotlight.rotation.z = Math.PI/2; 
+cube.add(spotlight); 
 
 //Objetivo 
 const geometry1 = new THREE.SphereGeometry(0.5, 16, 16 ); 
@@ -116,90 +116,23 @@ function checkGamepad() {
 const raycaster = new THREE.Raycaster();
 let score = 0;
 
-// // Función para detectar colision
-// function checkCollision() {
-//     // rayo desde la luz en la dirección de la esfera
-//     raycaster.set(spotlight.position, new THREE.Vector3(1, 0, 0).normalize()); // Dirección de la luz
-//     const intersects = raycaster.intersectObject(sphere);
+// Función para detectar colision
+function checkCollision() {
+    // rayo desde la luz en la dirección de la esfera
+    raycaster.set(spotlight.position, new THREE.Vector3(1, 0, 0).normalize()); // Dirección de la luz
+    const intersects = raycaster.intersectObject(sphere);
 
-//     if (intersects.length > 0) {  // Si hay una colisión, incrementa la puntuación y oculta la esfera
-//         scene.remove(sphere);
-//         score += 1;
-//         console.log("Puntuación:", score);
-//     }
-// }
-
-class Personaje {
-    constructor(scene, camera) {
-        this.scene = scene;
-
-        // Crear un contenedor para el personaje
-        this.character = new THREE.Object3D();
-        scene.add(this.character);
-
-        // Posicionar la cámara dentro del personaje
-        this.character.add(camera);
-        camera.position.set(0, 1.6, 0); // Ajustar altura
-
-        // Linterna (luz puntual)
-        this.linterna = new THREE.PointLight(0xFFFFFF, 1, 10); // Luz blanca
-        this.linterna.position.set(0, 1.6, 0); // Nivel de la cámara
-        this.character.add(this.linterna);
-        this.linternaEncendida = false; // Estado inicial de la linterna
-
-        // Material semitransparente para el haz de luz
-        this.linternaMaterial = new THREE.MeshPhongMaterial({
-            color: 0xFFFF00,
-            transparent: true,
-            opacity: 0,
-        });
-
-        // Haz de luz simulado
-        const spotlightGeometry = new THREE.CylinderGeometry(0.5, 1, 3, 32);
-        this.hazLuz = new THREE.Mesh(spotlightGeometry, this.linternaMaterial);
-        this.hazLuz.position.set(0, -1.5, -2); // Frente al personaje
-        this.hazLuz.rotation.x = Math.PI / 2;
-        this.character.add(this.hazLuz);
-
-        // Controlador de Gamepad
-        this.gamepad = null;
-
-        // Estado del botón
-        this.lastButtonState = false;
+    if (intersects.length > 0) {  // Si hay una colisión, incrementa la puntuación y oculta la esfera
+        scene.remove(sphere);
+        score += 1;
+        console.log("Puntuación:", score);
     }
+}
 
-    toggleLinterna() {
-        this.linternaEncendida = !this.linternaEncendida;
-        this.linterna.visible = this.linternaEncendida;
-        this.linternaMaterial.opacity = this.linternaEncendida ? 0.5 : 0; // Simula el haz de luz
-    }
+class personaje {
 
-    checkGamepad() {
-        const gamepads = navigator.getGamepads();
-        if (gamepads[0]) {
-            this.gamepad = gamepads[0];
-            if (this.gamepad.buttons[0].pressed && !this.lastButtonState) {
-                this.toggleLinterna();
-                this.lastButtonState = true;
-            }
-            if (!this.gamepad.buttons[0].pressed && this.lastButtonState) {
-                this.lastButtonState = false;
-            }
-        }
-    }
-
-    checkCollision(raycaster, targets) {
-        if (this.linternaEncendida) {
-            raycaster.set(this.character.position, new THREE.Vector3(0, 0, -1).applyQuaternion(this.character.children[0].quaternion));
-
-            const intersects = raycaster.intersectObjects(targets);
-            if (intersects.length > 0) {
-                const hit = intersects[0].object;
-                this.scene.remove(hit); // Elimina el objeto
-                console.log("Objeto eliminado:", hit);
-            }
-        }
-    }
+    
+    
 }
 
 class Enemy {
@@ -259,26 +192,17 @@ class Enemy {
     }
 }
 
-const personaje = new Personaje(scene, camera);
 const enemy = new Enemy(scene, new THREE.Vector3(0, 1, -5), 0.002, 0); // Posición inicial y velocidad
 
-// Objetivo para colisiones
-const targets = [];
-const targetGeometry = new THREE.SphereGeometry(0.5, 16, 16);
-const targetMaterial = new THREE.MeshPhongMaterial({ color: 0x0000FF });
-for (let i = 0; i < 3; i++) {
-    const target = new THREE.Mesh(targetGeometry, targetMaterial);
-    target.position.set(i * 2 - 2, 0, -5);
-    scene.add(target);
-    targets.push(target);
-}
+
 
 
 // Animación
 function animate() {
+    if (spotlightMaterial.opacity > 0) {
+        checkCollision();
+    }
 
-    personaje.checkGamepad();
-    personaje.checkCollision(raycaster, targets);
     renderer.render(scene, camera);
 
     // Mover al enemigo
