@@ -162,7 +162,8 @@ class Enemy {
 
         // Calcular el ángulo entre la dirección de la cámara y el enemigo
         const dot = direction.dot(toEnemy);
-        const beingWatched = dot > 0.8; // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera observado
+        const beingWatched = dot > 1; 
+        // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera observado
 
         // Cambiar el color del enemigo según esté siendo observado o no
         this.material.color.set(beingWatched ? 0x00FF00 : 0xFF0000); // Verde si está siendo observado, rojo si no
