@@ -134,23 +134,23 @@ class personaje {
 }
 
 class Enemy {
-    constructor(scene, position = new THREE.Vector3(), speed = 0.09, maxDistance = 0.005) {
+    constructor(scene, position = new THREE.Vector3(), speed = 0.05, maxDistance = 2) {
         // Crear geometría y material para el enemigo
         const geometry = new THREE.SphereGeometry(0.5, 16, 16);
-        const material = new THREE.MeshPhongMaterial({ color: 0x16bdd5 });
-        this.mesh = new THREE.Mesh(geometry, material);
+        this.material = new THREE.MeshPhongMaterial({ color: 0xFF0000 }); // Color inicial: rojo
+        this.mesh = new THREE.Mesh(geometry, this.material);
 
         // Posicionar el enemigo
         this.mesh.position.copy(position);
         this.speed = speed;
-        this.maxDistance = maxDistance
+        this.maxDistance = maxDistance; // Distancia máxima permitida a la cámara
 
         // Agregar el enemigo a la escena
         scene.add(this.mesh);
     }
 
     /**
-     * Verifica si el enemigo está siendo "observado" por la cámara.
+     * Verifica si el enemigo está siendo "observado" por la cámara y actualiza su color.
      * @param {THREE.Camera} camera - La cámara de la escena.
      * @returns {boolean} - `true` si el enemigo está siendo observado, de lo contrario, `false`.
      */
@@ -162,11 +162,16 @@ class Enemy {
 
         // Calcular el ángulo entre la dirección de la cámara y el enemigo
         const dot = direction.dot(toEnemy);
-        return dot > 0.8; // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera que está siendo observado
+        const beingWatched = dot > 0.8; // Si el ángulo es menor a ~36° (dot > cos(36°)), se considera observado
+
+        // Cambiar el color del enemigo según esté siendo observado o no
+        this.material.color.set(beingWatched ? 0x00FF00 : 0xFF0000); // Verde si está siendo observado, rojo si no
+
+        return beingWatched;
     }
 
     /**
-     * Mueve el enemigo hacia la cámara si no está siendo observado.
+     * Mueve el enemigo hacia la cámara si no está siendo observado y no excede la distancia máxima.
      * @param {THREE.Camera} camera - La cámara de la escena.
      */
     moveTowardCamera(camera) {
